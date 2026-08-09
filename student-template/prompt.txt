@@ -1,4 +1,63 @@
-# TODO: Write your AI prompt below this line
+Create a React functional component named `SupplierPerformance` that displays a supplier performance dashboard widget.
 
+## COMPONENT REQUIREMENTS
 
----
+Component name: `SupplierPerformance`
+Framework: React (functional component, hooks only, no class components)
+Styling: Tailwind CSS core utility classes only
+
+## PROPS / DATA STRUCTURE
+
+The component receives a single prop `data`, an array of supplier objects. Each object has this shape:
+
+```js
+{
+  supplierId: string,        // unique identifier, e.g. "SUP-1023"
+  supplierName: string,      // e.g. "Acme Steel Pvt Ltd"
+  totalOrders: number,       // total purchase orders in the period
+  onTimeOrders: number,      // orders delivered on or before due date
+  avgResponseTimeHours: number, // average time (in hours) supplier took to acknowledge/respond to a PO
+  lastOrderDate: string      // ISO date string, e.g. "2026-07-28"
+}
+```
+
+If `data` is empty or undefined, render a friendly empty state ("No supplier data available") instead of a blank screen.
+
+## DERIVED METRICS (calculate inside the component, do not expect them as props)
+
+- `onTimeDeliveryPct = Math.round((onTimeOrders / totalOrders) * 100)`
+  - Guard against division by zero (totalOrders === 0 → show "N/A")
+- `status` (color code), based on BOTH on-time % and response time:
+  - **Green** ("On Track"): onTimeDeliveryPct >= 90 AND avgResponseTimeHours <= 24
+  - **Yellow** ("Needs Attention"): onTimeDeliveryPct >= 75 AND onTimeDeliveryPct < 90, OR avgResponseTimeHours between 24 and 48
+  - **Red** ("At Risk"): onTimeDeliveryPct < 75 OR avgResponseTimeHours > 48
+  - If either metric alone triggers Red, the overall status is Red even if the other metric is Green (Red takes priority over Yellow, Yellow takes priority over Green).
+
+## UI LAYOUT
+
+Use a responsive **card grid** (not a table) so it works well on both desktop and mobile:
+- Grid: 1 column on mobile, 2 columns on tablet, 3 columns on desktop (`grid-cols-1 md:grid-cols-2 lg:grid-cols-3`)
+- Each card shows:
+  - Supplier name (bold, prominent)
+  - Supplier ID (small, muted text)
+  - On-time delivery % as a large number with a thin progress bar beneath it
+  - Average response time in hours (format as "18h" or "2d 4h" if over 24h)
+  - A colored status badge/pill (top-right corner of the card) showing Green/Yellow/Red with the status label text, not just a colored dot — include the dot AND the text for accessibility
+  - Last order date, small text at the bottom
+- Card border-left (4px) tinted to match the status color for quick visual scanning
+- Sort suppliers by status severity by default: Red first, then Yellow, then Green
+- Include a small summary strip above the grid showing total supplier count and a count per status (e.g. "12 Suppliers · 3 Red · 4 Yellow · 5 Green")
+
+## COLOR CODING (Tailwind classes)
+
+- Green: bg-green-100 text-green-800 border-green-500 (dot: bg-green-500)
+- Yellow: bg-yellow-100 text-yellow-800 border-yellow-500 (dot: bg-yellow-500)
+- Red: bg-red-100 text-red-800 border-red-500 (dot: bg-red-500)
+
+## OTHER REQUIREMENTS
+
+- Component must be self-contained in a single file, default export
+- No external icon libraries required, but lucide-react may be used for a small status icon if available
+- Add a `sortBy` internal state (default "status") allowing the user to toggle sorting between "status", "name", and "onTimePct" via simple buttons above the grid
+- Add basic prop validation via JSDoc comments (no PropTypes package dependency)
+- Code should be clean, commented where logic is non-obvious (especially the status calculation), and production-ready
